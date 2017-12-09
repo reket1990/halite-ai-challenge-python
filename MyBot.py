@@ -50,7 +50,7 @@ while True:
 
             # CHARGE
             navigate_command = ship.navigate(
-                nearest_enemy,
+                ship.closest_point_to(nearest_enemy),
                 game_map,
                 speed=5,
                 ignore_ships=True)

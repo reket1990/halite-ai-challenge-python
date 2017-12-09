@@ -1,3 +1,4 @@
 *.log
 *.hlt
 hlt/__pycache__/*
+*.zip
