@@ -48,7 +48,7 @@ class Entity:
         """
         return math.degrees(math.atan2(target.y - self.y, target.x - self.x)) % 360
 
-    def closest_point_to(self, target, min_distance=4):
+    def closest_point_to(self, target, min_distance=3):
         """
         Find the closest point to the given ship near the given target, outside its given radius,
         with an added fudge of min_distance.

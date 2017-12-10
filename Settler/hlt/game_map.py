@@ -1,6 +1,5 @@
 from . import collision, entity
 
-import logging
 
 class Map:
     """
@@ -60,36 +59,18 @@ class Map:
         """
         return list(self._planets.values())
 
-    def nearby_entities_by_distance(self, entity, type='All'):
+    def nearby_entities_by_distance(self, entity):
         """
         :param entity: The source entity to find distances from
-        :param type: Type of entity to get
-        :return: Dict containing all entities of type with their designated distances
-        :rtype: list[(distance, entity)]
+        :return: Dict containing all entities with their designated distances
+        :rtype: dict
         """
-        result = []
-        if type == 'Ship':
-            foreign_entities = self._all_ships()
-        elif type == 'Planet':
-            foreign_entities = self.all_planets()
-        else:
-            foreign_entities = self._all_ships() + self.all_planets()
-
-
-        for foreign_entity in foreign_entities:
-            # Skip myself
+        result = {}
+        for foreign_entity in self._all_ships() + self.all_planets():
             if entity == foreign_entity:
                 continue
-            result.append((entity.calculate_distance_between(foreign_entity), foreign_entity))
-
-        def sort_function(tuple):
-            return tuple[0]
-        result.sort(key=sort_function)
-        return list(map(
-            lambda tuple: tuple[1],
-            result
-        ))
-
+            result.setdefault(entity.calculate_distance_between(foreign_entity), []).append(foreign_entity)
+        return result
 
     def _link(self):
         """
