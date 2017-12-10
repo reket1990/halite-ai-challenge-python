@@ -48,18 +48,17 @@ class Entity:
         """
         return math.degrees(math.atan2(target.y - self.y, target.x - self.x)) % 360
 
-    def closest_point_to(self, target, min_distance=4):
+    def closest_point_to(self, target, distance=0):
         """
-        Find the closest point to the given ship near the given target, outside its given radius,
-        with an added fudge of min_distance.
+        Find the closest point to the given ship near the given target distance away
 
         :param Entity target: The target to compare against
-        :param int min_distance: Minimum distance specified from the object's outer radius
+        :param int distance: Distance specified from the object's outer radius
         :return: The closest point's coordinates
         :rtype: Position
         """
         angle = target.calculate_angle_between(self)
-        radius = target.radius + min_distance
+        radius = target.radius + distance
         x = target.x + radius * math.cos(math.radians(angle))
         y = target.y + radius * math.sin(math.radians(angle))
 
@@ -269,7 +268,7 @@ class Ship(Entity):
         """
         return "u {}".format(self.id)
 
-    def navigate(self, target, game_map, speed, avoid_obstacles=True, max_corrections=90, angular_step=1,
+    def navigate(self, target, game_map, max_speed, avoid_obstacles=True, max_corrections=36, angular_step=5,
                  ignore_ships=False, ignore_planets=False):
         """
         Move a ship to a specific target position (Entity). It is recommended to place the position
@@ -281,7 +280,7 @@ class Ship(Entity):
 
         :param Entity target: The entity to which you will navigate
         :param game_map.Map game_map: The map of the game, from which obstacles will be extracted
-        :param int speed: The (max) speed to navigate. If the obstacle is nearer, will adjust accordingly.
+        :param int max_speed: The max speed to navigate. If the obstacle is nearer, will adjust accordingly.
         :param bool avoid_obstacles: Whether to avoid the obstacles in the way (simple pathfinding).
         :param int max_corrections: The maximum number of degrees to deviate per turn while trying to pathfind. If exceeded returns None.
         :param int angular_step: The degree difference to deviate if the original destination has obstacles
@@ -293,7 +292,9 @@ class Ship(Entity):
         # Assumes a position, not planet (as it would go to the center of the planet otherwise)
         if max_corrections <= 0:
             return None
-        distance = self.calculate_distance_between(target)
+        distance = self.calculate_distance_between(target) + constants.SHIP_RADIUS
+        if distance < max_speed:
+            max_speed = distance
         angle = self.calculate_angle_between(target)
         ignore = () if not (ignore_ships or ignore_planets) \
             else Ship if (ignore_ships and not ignore_planets) \
@@ -303,9 +304,8 @@ class Ship(Entity):
             new_target_dx = math.cos(math.radians(angle + angular_step)) * distance
             new_target_dy = math.sin(math.radians(angle + angular_step)) * distance
             new_target = Position(self.x + new_target_dx, self.y + new_target_dy)
-            return self.navigate(new_target, game_map, speed, True, max_corrections - 1, angular_step)
-        speed = speed if (distance >= speed) else distance
-        return self.thrust(speed, angle)
+            return self.navigate(new_target, game_map, max_speed, True, max_corrections - 1, angular_step)
+        return self.thrust(max_speed, angle)
 
     def can_dock(self, planet):
         """

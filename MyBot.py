@@ -1,25 +1,11 @@
-"""
-Welcome to your first Halite-II bot!
-
-This bot's name is Settler. It's purpose is simple (don't expect it to win complex games :) ):
-1. Initialize game
-2. If a ship is not docked and there are unowned planets
-2.a. Try to Dock in the planet if close enough
-2.b If not, go towards the planet
-
-Note: Please do not place print statements here as they are used to communicate with the Halite engine. If you need
-to log anything use the logging module.
-"""
-# Let's start by importing the Halite Starter Kit so we can interface with the Halite engine
 import hlt
-# Then let's import the logging module so we can print out information
 import logging
 
 # GAME START
 # Here we define the bot's name as reket1990 and initialize the game, including communication with the Halite engine.
 game = hlt.Game("reket1990")
 # Then we print our start message to the logs
-logging.info("Starting up reket1990!")
+logging.info("Starting up reket1990 bot")
 
 
 def two_players(game_map):
@@ -50,19 +36,21 @@ def two_players(game_map):
             if len(docked_enemy_ships) == 0:
                 target = enemy_ships[0]
                 navigate_command = ship.navigate(
-                    ship.closest_point_to(target, min_distance=6),
+                    ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS+1),
                     game_map,
-                    speed=4,
+                    max_speed=hlt.constants.MAX_SPEED//2,
                     ignore_ships=True)
+                logging.info("Ship " + str(ship.id) + ": No targets, moving closer")
 
             # Attack enemy docked ship
             else:
                 target = docked_enemy_ships[0]
                 navigate_command = ship.navigate(
-                    ship.closest_point_to(target, min_distance=5),
+                    ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS),
                     game_map,
-                    speed=7,
+                    max_speed=hlt.constants.MAX_SPEED,
                     ignore_ships=True)
+                logging.info("Ship " + str(ship.id) + ": Target Found")
 
             if navigate_command:
                 command_queue.append(navigate_command)
@@ -84,14 +72,16 @@ def two_players(game_map):
 
             target = mineable_planets[0]
             if ship.can_dock(target):
-                command_queue.append(ship.dock(planet))
+                command_queue.append(ship.dock(target))
+                logging.info("Ship " + str(ship.id) + ": Docking")
             else:
-                # If we can't dock, we move towards the closest empty point near this planet (by using closest_point_to)
+                # If we can't dock, we move towards the planet
                 navigate_command = ship.navigate(
-                    ship.closest_point_to(target),
+                    ship.closest_point_to(target, distance=hlt.constants.DOCK_RADIUS),
                     game_map,
-                    speed=int(hlt.constants.MAX_SPEED),
+                    max_speed=hlt.constants.MAX_SPEED,
                     ignore_ships=True)
+                logging.info("Ship " + str(ship.id) + ": Moving towards planet")
 
                 if navigate_command:
                     command_queue.append(navigate_command)

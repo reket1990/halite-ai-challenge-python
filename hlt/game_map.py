@@ -1,6 +1,5 @@
-from . import collision, entity
-
 import logging
+from . import collision, entity
 
 class Map:
     """
@@ -80,7 +79,7 @@ class Map:
             # Skip myself
             if entity == foreign_entity:
                 continue
-            result.append((entity.calculate_distance_between(foreign_entity), foreign_entity))
+            result.append((entity.calculate_distance_between(entity.closest_point_to(foreign_entity)), foreign_entity))
 
         def sort_function(tuple):
             return tuple[0]
@@ -159,7 +158,7 @@ class Map:
         for foreign_entity in entities:
             if foreign_entity == ship or foreign_entity == target:
                 continue
-            if collision.intersect_segment_circle(ship, target, foreign_entity, fudge=ship.radius + 0.1):
+            if collision.intersect_segment_circle(ship, target, foreign_entity):
                 obstacles.append(foreign_entity)
         return obstacles
 
