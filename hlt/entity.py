@@ -292,7 +292,7 @@ class Ship(Entity):
         # Assumes a position, not planet (as it would go to the center of the planet otherwise)
         if max_corrections <= 0:
             return None
-        distance = self.calculate_distance_between(target)
+        distance = self.calculate_distance_between(target) + constants.SHIP_RADIUS
         if distance < max_speed:
             max_speed = distance
         angle = self.calculate_angle_between(target)

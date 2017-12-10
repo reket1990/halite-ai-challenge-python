@@ -3,9 +3,41 @@ import logging
 
 # GAME START
 # Here we define the bot's name as reket1990 and initialize the game, including communication with the Halite engine.
-game = hlt.Game("reket1990 v6")
+game = hlt.Game("reket1990 v7")
 # Then we print our start message to the logs
 logging.info("Starting up reket1990 bot")
+
+def attack(ship, game_map):
+    # Get enemy ships by distance
+    foreign_ships = game_map.nearby_entities_by_distance(ship, 'Ship')
+    enemy_ships = list(filter(
+        lambda foreign_ship: foreign_ship.owner.id != game_map.get_me().id,
+        foreign_ships
+    ))
+    docked_enemy_ships = list(filter(
+        lambda enemy_ship: enemy_ship.docking_status != ship.DockingStatus.UNDOCKED,
+        enemy_ships
+    ))
+
+    # No enemy targets to kill, move closer slowly
+    if len(docked_enemy_ships) == 0:
+        target = enemy_ships[0]
+        logging.info("Ship " + str(ship.id) + ": No targets, moving closer")
+        return ship.navigate(
+            ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS+1),
+            game_map,
+            max_speed=hlt.constants.MAX_SPEED//2,
+            ignore_ships=True)
+
+    # Attack enemy docked ship
+    else:
+        target = docked_enemy_ships[0]
+        logging.info("Ship " + str(ship.id) + ": Target Found")
+        return ship.navigate(
+            ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS),
+            game_map,
+            max_speed=hlt.constants.MAX_SPEED,
+            ignore_ships=True)
 
 
 def two_players(game_map):
@@ -21,39 +53,7 @@ def two_players(game_map):
     for ship in game_map.get_me().all_ships():
         # One in 3 ships are attacker ships
         if ship.id % 3 == 2:
-            # Get enemy ships by distance
-            foreign_ships = game_map.nearby_entities_by_distance(ship, 'Ship')
-            enemy_ships = list(filter(
-                lambda foreign_ship: foreign_ship.owner.id != game_map.get_me().id,
-                foreign_ships
-            ))
-            docked_enemy_ships = list(filter(
-                lambda enemy_ship: enemy_ship.docking_status != ship.DockingStatus.UNDOCKED,
-                enemy_ships
-            ))
-
-            # No enemy targets to kill, move closer slowly
-            if len(docked_enemy_ships) == 0:
-                target = enemy_ships[0]
-                navigate_command = ship.navigate(
-                    ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS+1),
-                    game_map,
-                    max_speed=hlt.constants.MAX_SPEED//2,
-                    ignore_ships=True)
-                logging.info("Ship " + str(ship.id) + ": No targets, moving closer")
-
-            # Attack enemy docked ship
-            else:
-                target = docked_enemy_ships[0]
-                navigate_command = ship.navigate(
-                    ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS),
-                    game_map,
-                    max_speed=hlt.constants.MAX_SPEED,
-                    ignore_ships=True)
-                logging.info("Ship " + str(ship.id) + ": Target Found")
-
-            if navigate_command:
-                command_queue.append(navigate_command)
+            navigate_command = attack(ship, game_map)
 
         # All other ships are econ ships
         else:
@@ -70,20 +70,26 @@ def two_players(game_map):
                 planets
             ))
 
+            # If no mineable planets, ship becomes attack ship
+            if len(mineable_planets) == 0:
+                logging.info("Ship " + str(ship.id) + ": No mineable planets, attacking")
+                navigate_command = attack(ship, game_map)
+                continue
+
             target = mineable_planets[0]
             if ship.can_dock(target):
-                command_queue.append(ship.dock(target))
                 logging.info("Ship " + str(ship.id) + ": Docking")
+                navigate_command = ship.dock(target)
             else:
                 # If we can't dock, we move towards the planet
+                logging.info("Ship " + str(ship.id) + ": Moving towards planet")
                 navigate_command = ship.navigate(
                     ship.closest_point_to(target, distance=hlt.constants.DOCK_RADIUS),
                     game_map,
                     max_speed=hlt.constants.MAX_SPEED)
-                logging.info("Ship " + str(ship.id) + ": Moving towards planet")
 
-                if navigate_command:
-                    command_queue.append(navigate_command)
+        if navigate_command:
+            command_queue.append(navigate_command)
 
     return command_queue
 

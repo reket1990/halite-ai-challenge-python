@@ -1,14 +1,15 @@
+from . import constants
 from .entity import Position, Entity
 
 
-def intersect_segment_circle(start, end, circle, *, fudge=0.5):
+def intersect_segment_circle(start, end, circle, *, spacing=constants.SHIP_RADIUS+0.05):
     """
     Test whether a line segment and circle intersect.
 
     :param Entity start: The start of the line segment. (Needs x, y attributes)
     :param Entity end: The end of the line segment. (Needs x, y attributes)
     :param Entity circle: The circle to test against. (Needs x, y, r attributes)
-    :param float fudge: A fudge factor; additional distance to leave between the segment and circle. (Probably set this to the ship radius, 0.5.)
+    :param float spacing: Additional distance to leave between the segment and circle
     :return: True if intersects, False otherwise
     :rtype: bool
     """
@@ -26,7 +27,7 @@ def intersect_segment_circle(start, end, circle, *, fudge=0.5):
 
     if a == 0.0:
         # Start and end are the same point
-        return start.calculate_distance_between(circle) <= circle.radius + fudge
+        return start.calculate_distance_between(circle) <= circle.radius + spacing
 
     # Time along segment when closest to the circle (vertex of the quadratic)
     t = min(-b / (2 * a), 1.0)
@@ -37,4 +38,4 @@ def intersect_segment_circle(start, end, circle, *, fudge=0.5):
     closest_y = start.y + dy * t
     closest_distance = Position(closest_x, closest_y).calculate_distance_between(circle)
 
-    return closest_distance <= circle.radius + fudge
+    return closest_distance <= circle.radius + spacing

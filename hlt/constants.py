@@ -8,14 +8,14 @@ MAX_SHIP_HEALTH = 255
 BASE_SHIP_HEALTH = 255
 #: Weapon cooldown period
 WEAPON_COOLDOWN = 1
-#: Weapon damage radius (5.0 - SHIP_RADIUS)
-WEAPON_RADIUS = 4.5
+#: Weapon damage radius
+WEAPON_RADIUS = 5.0
 #: Weapon damage
 WEAPON_DAMAGE = 64
 #: Radius in which explosions affect other entities
 EXPLOSION_RADIUS = 10.0
-#: Distance from the edge of the planet at which ships can try to dock (4.0 - SHIP_RADIUS)
-DOCK_RADIUS = 3.5
+#: Distance from the edge of the planet at which ships can try to dock
+DOCK_RADIUS = 4.0
 #: Number of turns it takes to dock a ship
 DOCK_TURNS = 5
 #: Number of production units per turn contributed by each docked ship
