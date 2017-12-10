@@ -79,8 +79,7 @@ def two_players(game_map):
                 navigate_command = ship.navigate(
                     ship.closest_point_to(target, distance=hlt.constants.DOCK_RADIUS),
                     game_map,
-                    max_speed=hlt.constants.MAX_SPEED,
-                    ignore_ships=True)
+                    max_speed=hlt.constants.MAX_SPEED)
                 logging.info("Ship " + str(ship.id) + ": Moving towards planet")
 
                 if navigate_command:
