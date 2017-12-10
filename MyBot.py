@@ -3,7 +3,7 @@ import logging
 
 # GAME START
 # Here we define the bot's name as reket1990 and initialize the game, including communication with the Halite engine.
-game = hlt.Game("reket1990")
+game = hlt.Game("reket1990 v6")
 # Then we print our start message to the logs
 logging.info("Starting up reket1990 bot")
 
@@ -97,7 +97,7 @@ def four_players(game_map):
     :rtype: list[str]
     """
     # For now just use the two player bot
-    two_players(game_map)
+    return two_players(game_map)
 
 while True:
     # TURN START
