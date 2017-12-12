@@ -268,8 +268,8 @@ class Ship(Entity):
         """
         return "u {}".format(self.id)
 
-    def navigate(self, target, game_map, max_speed, avoid_obstacles=True, max_corrections=36, angular_step=5,
-                 ignore_ships=False, ignore_planets=False):
+    def navigate(self, target, game_map, ignore_ships=False, ignore_planets=False,
+        max_speed=constants.MAX_SPEED, max_corrections=36, angular_step=5):
         """
         Move a ship to a specific target position (Entity). It is recommended to place the position
         itself here, else navigate will crash into the target. If avoid_obstacles is set to True (default)
@@ -281,7 +281,6 @@ class Ship(Entity):
         :param Entity target: The entity to which you will navigate
         :param game_map.Map game_map: The map of the game, from which obstacles will be extracted
         :param int max_speed: The max speed to navigate. If the obstacle is nearer, will adjust accordingly.
-        :param bool avoid_obstacles: Whether to avoid the obstacles in the way (simple pathfinding).
         :param int max_corrections: The maximum number of degrees to deviate per turn while trying to pathfind. If exceeded returns None.
         :param int angular_step: The degree difference to deviate if the original destination has obstacles
         :param bool ignore_ships: Whether to ignore ships in calculations (this will make your movement faster, but more precarious)
@@ -289,9 +288,6 @@ class Ship(Entity):
         :return string: The command trying to be passed to the Halite engine or None if movement is not possible within max_corrections degrees.
         :rtype: str
         """
-        # Assumes a position, not planet (as it would go to the center of the planet otherwise)
-        if max_corrections <= 0:
-            return None
         distance = self.calculate_distance_between(target) + constants.SHIP_RADIUS
         if distance < max_speed:
             max_speed = distance
@@ -300,12 +296,22 @@ class Ship(Entity):
             else Ship if (ignore_ships and not ignore_planets) \
             else Planet if (ignore_planets and not ignore_ships) \
             else Entity
-        if avoid_obstacles and game_map.obstacles_between(self, target, ignore):
-            new_target_dx = math.cos(math.radians(angle + angular_step)) * distance
-            new_target_dy = math.sin(math.radians(angle + angular_step)) * distance
-            new_target = Position(self.x + new_target_dx, self.y + new_target_dy)
-            return self.navigate(new_target, game_map, max_speed, True, max_corrections - 1, angular_step)
-        return self.thrust(max_speed, angle)
+        current_correction = 0
+        while current_correction < max_corrections:
+            # Compute possible left navigation
+            left_target_dx = math.cos(math.radians(angle + current_correction * angular_step)) * distance
+            left_target_dy = math.sin(math.radians(angle + current_correction * angular_step)) * distance
+            left_target = Position(self.x + left_target_dx, self.y + left_target_dy)
+            if not game_map.obstacles_between(self, left_target, ignore):
+                return self.thrust(max_speed, angle + current_correction * angular_step)
+            # Compute possible right navigation
+            right_target_dx = math.cos(math.radians(angle - current_correction * angular_step)) * distance
+            right_target_dy = math.sin(math.radians(angle - current_correction * angular_step)) * distance
+            right_target = Position(self.x + right_target_dx, self.y + right_target_dy)
+            if not game_map.obstacles_between(self, right_target, ignore):
+                return self.thrust(max_speed, angle - current_correction * angular_step)
+            current_correction += 1
+        return None
 
     def can_dock(self, planet):
         """

@@ -1,12 +1,7 @@
 import hlt
 import logging
 
-# GAME START
-# Here we define the bot's name as reket1990 and initialize the game, including communication with the Halite engine.
-game = hlt.Game("reket1990 v7")
-# Then we print our start message to the logs
-logging.info("Starting up reket1990 bot")
-
+################################### HELPER FUNCTIONS ###################################
 def attack(ship, game_map):
     # Get enemy ships by distance
     foreign_ships = game_map.nearby_entities_by_distance(ship, 'Ship')
@@ -26,7 +21,6 @@ def attack(ship, game_map):
         return ship.navigate(
             ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS+1),
             game_map,
-            max_speed=hlt.constants.MAX_SPEED//2,
             ignore_ships=True)
 
     # Attack enemy docked ship
@@ -36,10 +30,10 @@ def attack(ship, game_map):
         return ship.navigate(
             ship.closest_point_to(target, distance=hlt.constants.WEAPON_RADIUS),
             game_map,
-            max_speed=hlt.constants.MAX_SPEED,
             ignore_ships=True)
+################################# END: HELPER FUNCTIONS ################################
 
-
+######################################### BOTS #########################################
 def two_players(game_map):
     """
     Bot for 2 player games
@@ -74,19 +68,19 @@ def two_players(game_map):
             if len(mineable_planets) == 0:
                 logging.info("Ship " + str(ship.id) + ": No mineable planets, attacking")
                 navigate_command = attack(ship, game_map)
-                continue
 
-            target = mineable_planets[0]
-            if ship.can_dock(target):
-                logging.info("Ship " + str(ship.id) + ": Docking")
-                navigate_command = ship.dock(target)
+            # Else, econ
             else:
-                # If we can't dock, we move towards the planet
-                logging.info("Ship " + str(ship.id) + ": Moving towards planet")
-                navigate_command = ship.navigate(
-                    ship.closest_point_to(target, distance=hlt.constants.DOCK_RADIUS),
-                    game_map,
-                    max_speed=hlt.constants.MAX_SPEED)
+                target = mineable_planets[0]
+                if ship.can_dock(target):
+                    logging.info("Ship " + str(ship.id) + ": Docking")
+                    navigate_command = ship.dock(target)
+                else:
+                    # If we can't dock, we move towards the planet
+                    logging.info("Ship " + str(ship.id) + ": Moving towards planet")
+                    navigate_command = ship.navigate(
+                        ship.closest_point_to(target, distance=hlt.constants.DOCK_RADIUS),
+                        game_map)
 
         if navigate_command:
             command_queue.append(navigate_command)
@@ -104,6 +98,14 @@ def four_players(game_map):
     """
     # For now just use the two player bot
     return two_players(game_map)
+####################################### END: BOTS ######################################
+
+####################################### GAMEPLAY #######################################
+# GAME START
+# Here we define the bot's name as reket1990 and initialize the game, including communication with the Halite engine
+game = hlt.Game("reket1990")
+# Then we print our start message to the logs
+logging.info("Starting up reket1990 bot")
 
 while True:
     # TURN START
@@ -120,5 +122,5 @@ while True:
     # Send our set of commands to the Halite engine for this turn
     game.send_command_queue(command_queue)
     # TURN END
-
 # GAME END
+##################################### END: GAMEPLAY ####################################
